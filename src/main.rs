@@ -6,7 +6,12 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-fn check_path(desired_path: &str) -> Result<(), ()> {
+
+
+fn check_path(
+    desired_path: &str
+) -> Result<(), ()> {
+
     if let Ok(current_path) = env::current_dir() {
         if let Ok(desired_canonical_path) = std::fs::canonicalize(desired_path) {
             if current_path.starts_with(desired_canonical_path) {
@@ -16,6 +21,7 @@ fn check_path(desired_path: &str) -> Result<(), ()> {
             }
         }
     }
+
     Err(())
 }
 
@@ -28,10 +34,12 @@ fn watch_directory_recursive(
     let dir_metadata = fs::metadata(dir)?;
 
     if dir_metadata.is_dir() {
-        let wd = inotify.watches().add(
-            dir,
-            WatchMask::MODIFY | WatchMask::DELETE | WatchMask::CREATE,
-        )?;
+        let wd = inotify
+            .watches()
+            .add(
+                dir,
+                WatchMask::MODIFY | WatchMask::DELETE | WatchMask::CREATE,
+            )?;
 
         let wd_id: i32 = wd.get_watch_descriptor_id();
         watched_dirs.insert(wd_id, dir.to_path_buf());
@@ -68,12 +76,18 @@ fn main() {
         let events = inotify.read_events_blocking(&mut buffer).expect("Error while reading events");
 
         for event in events {
-            if !event.mask.contains(EventMask::ISDIR) {
-                let name_file = match event.name {
-                    Some(name_file) => name_file,
-                    None => continue,
-                };
+            let name_file = match event.name {
+                Some(name_file) => name_file,
+                None => continue,
+            };
 
+            if event.mask.contains(EventMask::ISDIR) {
+                if event.mask.contains(EventMask::CREATE) {
+                    println!("Dossier créé : {:?}", name_file);
+                } else if event.mask.contains(EventMask::DELETE) {
+                    println!("Dossier supprimé : {:?}", name_file);
+                }
+            } else {
                 match event.mask {
                     EventMask::MODIFY => {
                         println!("Fichier modifié : {:?}", name_file);
