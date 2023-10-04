@@ -6,30 +6,9 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::error::Error;
-use std::fmt;
 
-
-
-#[derive(Debug)]
-struct MyError {
-    message: String,
-}
-
-impl MyError {
-    fn new(message: &str) -> MyError {
-        MyError {
-            message: message.to_string(),
-        }
-    }
-}
-
-impl fmt::Display for MyError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "MonErreur: {}", self.message)
-    }
-}
-
-impl Error for MyError {}
+mod my_error;
+use crate::my_error::MyError;
 
 
 
@@ -61,7 +40,7 @@ fn add_dir_watch(
         .add(
             dir,
             WatchMask::MODIFY | WatchMask::DELETE | WatchMask::CREATE | WatchMask::MOVED_FROM | WatchMask::MOVED_TO,
-            )?;
+        )?;
 
     watched_dirs.insert(wd, dir.to_path_buf());
 
@@ -92,17 +71,14 @@ fn watch_directory_recursive(
 
 fn dir_moved_from (
     inotify: &Inotify,
-    path: &Path,
-    dir: &String,
+    complete_path: &PathBuf,
     watched_dirs: &mut HashMap<WatchDescriptor, PathBuf>,
 ) -> Result<(), Box<dyn Error>> {
 
-    let mut complete_path = path.to_path_buf();
-    complete_path.push(dir);
     let mut keys_to_remove: Vec<WatchDescriptor> = Vec::new();
 
     for (key, value) in watched_dirs.iter() {
-        if value.starts_with(&complete_path) {
+        if value.starts_with(complete_path) {
             inotify.watches().remove(key.clone())?;
             keys_to_remove.push(key.clone());
         }
@@ -110,6 +86,24 @@ fn dir_moved_from (
 
     for key in keys_to_remove.iter() {
         watched_dirs.remove(key);
+    }
+
+    Ok(())
+}
+
+fn dir_delete (
+    complete_path: &PathBuf,
+    watched_dirs: &mut HashMap<WatchDescriptor, PathBuf>,
+) -> Result<(), Box<dyn Error>> {
+
+    let to_remove: WatchDescriptor;
+
+    for (key, value) in watched_dirs.iter() {
+        if value.to_path_buf() == complete_path.clone() {
+            to_remove = key.clone();
+            watched_dirs.remove(&to_remove);
+            break;
+        }
     }
 
     Ok(())
@@ -157,6 +151,9 @@ fn main() -> Result<(), Box<dyn Error>> {
                 None => continue,
             };
 
+            let mut complete_path = path.to_path_buf();
+            complete_path.push(name);
+
             if event.mask.contains(EventMask::ISDIR) {
                 let flag = EventMask::ISDIR ^ event.mask;
                 match flag {
@@ -165,10 +162,11 @@ fn main() -> Result<(), Box<dyn Error>> {
                     }
                     EventMask::DELETE => {
                         println!("Dossier supprimé : {:?}", name);
+                        dir_delete(&complete_path, &mut watched_dirs)?;
                     }
                     EventMask::MOVED_FROM => {
                         println!("Dossier from : {:?}", name);
-                        dir_moved_from(&inotify, path, &name.to_string_lossy().to_string(), &mut watched_dirs)?;
+                        dir_moved_from(&inotify, &complete_path, &mut watched_dirs)?;
                     }
                     EventMask::MOVED_TO => {
                         println!("Dossier to : {:?}", name);
