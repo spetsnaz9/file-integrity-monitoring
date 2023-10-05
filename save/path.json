@@ -1,0 +1,10 @@
+[
+    {
+        "path": "path1",
+        "hash": "hash1"
+    },
+    {
+        "path": "path2",
+        "hash": "hash2"
+    }
+]

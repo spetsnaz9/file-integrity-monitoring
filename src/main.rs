@@ -1,14 +1,22 @@
 extern crate inotify;
 
-use inotify::{Inotify, WatchMask, EventMask, WatchDescriptor};
+#[macro_use]
+extern crate serde_derive;
+
+use inotify::{Inotify, EventMask, WatchDescriptor};
 use std::env;
 use std::collections::HashMap;
-use std::fs;
 use std::path::{Path, PathBuf};
 use std::error::Error;
 
 mod my_error;
 use crate::my_error::MyError;
+mod event_dir;
+use crate::event_dir::{dir_moved_from, dir_moved_to, dir_delete, dir_create};
+mod watcher;
+use crate::watcher::watch_directory_recursive;
+mod init;
+use crate::init::init;
 
 
 
@@ -29,101 +37,6 @@ fn check_path(
     Err(())
 }
 
-fn add_dir_watch(
-    inotify: &Inotify,
-    dir: &Path,
-    watched_dirs: &mut HashMap<WatchDescriptor, PathBuf>,
-) -> Result<(), Box<dyn Error>> {
-
-    let wd = inotify
-        .watches()
-        .add(
-            dir,
-            WatchMask::MODIFY | WatchMask::DELETE | WatchMask::CREATE | WatchMask::MOVED_FROM | WatchMask::MOVED_TO,
-        )?;
-
-    watched_dirs.insert(wd, dir.to_path_buf());
-
-    Ok(())
-}
-
-fn watch_directory_recursive(
-    inotify: &Inotify,
-    dir: &Path,
-    watched_dirs: &mut HashMap<WatchDescriptor, PathBuf>,
-) -> Result<(), Box<dyn Error>> {
-
-    let dir_metadata = fs::metadata(dir)?;
-
-    if dir_metadata.is_dir() {
-        add_dir_watch(inotify, dir, watched_dirs)?;
-
-        let dir_entries = fs::read_dir(dir)?;
-        for entry in dir_entries {
-            if let Ok(entry) = entry {
-                watch_directory_recursive(inotify, &entry.path(), watched_dirs)?;
-            }
-        }
-    }
-
-    Ok(())
-}
-
-fn dir_moved_from (
-    inotify: &Inotify,
-    complete_path: &PathBuf,
-    watched_dirs: &mut HashMap<WatchDescriptor, PathBuf>,
-) -> Result<(), Box<dyn Error>> {
-
-    let mut keys_to_remove: Vec<WatchDescriptor> = Vec::new();
-
-    for (key, value) in watched_dirs.iter() {
-        if value.starts_with(complete_path) {
-            inotify.watches().remove(key.clone())?;
-            keys_to_remove.push(key.clone());
-        }
-    }
-
-    for key in keys_to_remove.iter() {
-        watched_dirs.remove(key);
-    }
-
-    Ok(())
-}
-
-fn dir_delete (
-    complete_path: &PathBuf,
-    watched_dirs: &mut HashMap<WatchDescriptor, PathBuf>,
-) -> Result<(), Box<dyn Error>> {
-
-    let to_remove: WatchDescriptor;
-
-    for (key, value) in watched_dirs.iter() {
-        if value.to_path_buf() == complete_path.clone() {
-            to_remove = key.clone();
-            watched_dirs.remove(&to_remove);
-            break;
-        }
-    }
-
-    Ok(())
-}
-
-fn dir_moved_to(
-    inotify: &Inotify,
-    path: &Path,
-    dir: &String,
-    watched_dirs: &mut HashMap<WatchDescriptor, PathBuf>,
-) -> Result<(), Box<dyn Error>> {
-
-    let mut complete_path = path.to_path_buf();
-    complete_path.push(dir);
-
-    watch_directory_recursive(&inotify, &complete_path, watched_dirs)?;
-
-    Ok(())
-}
-
 fn main() -> Result<(), Box<dyn Error>> {
     let desired_path = "/home/spetsnaz/projets/fms/test";
     match check_path(&desired_path) {
@@ -135,6 +48,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
 
     let path = Path::new(&desired_path);
+    init(&path)?;
+
     let mut inotify = Inotify::init().expect("Failed to initialize inotify");
     let mut watched_dirs: HashMap<WatchDescriptor, PathBuf> = HashMap::new();
 
@@ -159,6 +74,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                 match flag {
                     EventMask::CREATE => {
                         println!("Dossier créé : {:?}", name);
+                        dir_create(&inotify, &complete_path, &mut watched_dirs)?;
                     }
                     EventMask::DELETE => {
                         println!("Dossier supprimé : {:?}", name);
