@@ -4,24 +4,26 @@ extern crate serde_derive;
 
 use std::path::{Path, PathBuf};
 use std::error::Error;
-use std::fs::{self, File};
+use std::fs::File;
 use std::io::Write;
 use sha2::{Digest, Sha256};
 use std::collections::HashSet;
 
+use crate::tracker_file::check_rec;
 
 
-struct PathJson {
-    path: PathBuf,
-    file_use: bool,
-    list: Vec<ContentJson>,
-    exist: HashSet<PathBuf>,
+
+pub struct PathJson {
+    pub path: PathBuf,
+    pub file_use: bool,
+    pub list: Vec<ContentJson>,
+    pub exist: HashSet<PathBuf>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-struct ContentJson {
-    path: String,
-    hash: String,
+pub struct ContentJson {
+    pub path: String,
+    pub hash: String,
 }
 
 impl PathJson {
@@ -55,7 +57,7 @@ impl PathJson {
         Ok(())
     }
 
-    fn write(
+    pub fn write(
         &mut self
     ) -> Result<(), Box<dyn Error>> {
 
@@ -69,29 +71,6 @@ impl PathJson {
         self.file_use = false;
         Ok(())
     }
-
-    fn check_file(
-        &mut self,
-        path: &Path,
-    ) -> Result<(), Box<dyn Error>> {
-
-        if !self.exist.contains(path) {
-            let hash = sha256_hash(path);
-
-            let new = ContentJson {
-                path: path.to_string_lossy().to_string(),
-                hash,
-            };
-
-            self.list.push(new);            
-            self.exist.insert(path.to_path_buf());
-
-            self.write()?;
-        }
-        // else : regarder les modifications pour ce fichier.
-
-        Ok(())
-    }
 }
 
 pub fn init(
@@ -102,36 +81,13 @@ pub fn init(
     path_json.read()?;
 
     println!("{:?}", path_json.list);
-    rec_check(dir, &mut path_json)?;
+    check_rec(dir, &mut path_json)?;
     println!("{:?}", path_json.list);
 
     Ok(())
 }
 
-fn rec_check(
-    dir: &Path,
-    path_json: &mut PathJson,
-) -> Result<(), Box<dyn Error>> {
-   
-    if dir.is_dir() {
-        for entry in fs::read_dir(dir)? {
-            let entry = entry?;
-            let path = entry.path();
-
-            if path.is_file() {
-                println!("fichier : {:?}", path);
-                path_json.check_file(&path)?;
-            } else if path.is_dir() {
-                println!("dossier : {:?}", path);
-                rec_check(&path, path_json)?;
-            }
-        }
-    }
-
-    Ok(())
-}
-
-fn sha256_hash(
+pub fn sha256_hash(
     path: &Path,
 ) -> String {
 

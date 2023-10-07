@@ -17,6 +17,7 @@ mod watcher;
 use crate::watcher::watch_directory_recursive;
 mod init;
 use crate::init::init;
+mod tracker_file;
 
 
 
