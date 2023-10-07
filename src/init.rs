@@ -5,13 +5,15 @@ extern crate serde_derive;
 use std::path::{Path, PathBuf};
 use std::error::Error;
 use std::fs::{self, File};
+use std::io::Write;
 use sha2::{Digest, Sha256};
 use std::collections::HashSet;
 
 
 
 struct PathJson {
-    file: File,
+    path: PathBuf,
+    file_use: bool,
     list: Vec<ContentJson>,
     exist: HashSet<PathBuf>,
 }
@@ -25,11 +27,11 @@ struct ContentJson {
 impl PathJson {
     fn new() -> Result<PathJson, Box<dyn Error>> {
 
-        let json_path = Path::new("save/path.json");
-        let file = File::open(json_path)?;
+        let path = Path::new("save/path.json").to_path_buf();
 
         return Ok(PathJson {
-            file,
+            path,
+            file_use: false,
             list: Vec::new(),
             exist: HashSet::new(),
         });
@@ -39,17 +41,36 @@ impl PathJson {
         &mut self,
     ) -> Result<(), Box<dyn Error>> {
 
-        self.list = serde_json::from_reader(&self.file)?;
+        self.file_use = true;
+
+        let file = File::open(self.path.clone())?;
+        self.list = serde_json::from_reader(file)?;
 
         for content in self.list.iter() {
             let path = Path::new(&content.path).to_path_buf();
             self.exist.insert(path);
         }
 
+        self.file_use = false;
         Ok(())
     }
 
-    fn add_file(
+    fn write(
+        &mut self
+    ) -> Result<(), Box<dyn Error>> {
+
+        self.file_use = true;
+        
+        let json_string = serde_json::to_string_pretty(&self.list)?;
+        let mut file = File::create(self.path.clone())?;
+
+        file.write_all(json_string.as_bytes())?;
+
+        self.file_use = false;
+        Ok(())
+    }
+
+    fn check_file(
         &mut self,
         path: &Path,
     ) -> Result<(), Box<dyn Error>> {
@@ -64,7 +85,10 @@ impl PathJson {
 
             self.list.push(new);            
             self.exist.insert(path.to_path_buf());
+
+            self.write()?;
         }
+        // else : regarder les modifications pour ce fichier.
 
         Ok(())
     }
@@ -96,7 +120,7 @@ fn rec_check(
 
             if path.is_file() {
                 println!("fichier : {:?}", path);
-                path_json.add_file(&path)?;
+                path_json.check_file(&path)?;
             } else if path.is_dir() {
                 println!("dossier : {:?}", path);
                 rec_check(&path, path_json)?;

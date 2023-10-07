@@ -1,10 +1,14 @@
 [
-    {
-        "path": "path1",
-        "hash": "hash1"
-    },
-    {
-        "path": "path2",
-        "hash": "hash2"
-    }
+  {
+    "path": "/home/spetsnaz/projets/fms/test/dossier/file",
+    "hash": "2ff725dc7b692710ed11ce044ed7fc25954acbed091452c22be6aab03937a19c"
+  },
+  {
+    "path": "/home/spetsnaz/projets/fms/test/toto",
+    "hash": "bb167bb0489ed39a0d29bdb1efda63ec0cc0517f7e6fbade20d692e8430a6cc5"
+  },
+  {
+    "path": "/home/spetsnaz/projets/fms/test/ahhahah",
+    "hash": "c9f86e81060bcf11708f7a589c01ee027ef3150ed3381102102ecb84788611ed"
+  }
 ]
