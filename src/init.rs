@@ -77,12 +77,11 @@ pub fn init(
     dir: &Path
 ) -> Result<(), Box<dyn Error>> {
 
+    let path = dir.to_path_buf();
     let mut path_json = PathJson::new()?;
     path_json.read()?;
 
-    println!("{:?}", path_json.list);
-    check_rec(dir, &mut path_json)?;
-    println!("{:?}", path_json.list);
+    check_rec(&path, &mut path_json)?;
 
     Ok(())
 }

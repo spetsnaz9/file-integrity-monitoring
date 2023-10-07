@@ -31,13 +31,9 @@ pub fn dir_moved_from (
 
 pub fn dir_moved_to(
     inotify: &Inotify,
-    path: &Path,
-    dir: &String,
+    complete_path: &PathBuf,
     watched_dirs: &mut HashMap<WatchDescriptor, PathBuf>,
 ) -> Result<(), Box<dyn Error>> {
-
-    let mut complete_path = path.to_path_buf();
-    complete_path.push(dir);
 
     watch_directory_recursive(&inotify, &complete_path, watched_dirs)?;
 

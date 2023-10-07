@@ -1,18 +1,14 @@
 [
   {
-    "path": "/home/spetsnaz/projets/fms/test/dossier/file",
-    "hash": "2ff725dc7b692710ed11ce044ed7fc25954acbed091452c22be6aab03937a19c"
+    "path": "/home/spetsnaz/projets/fms/test/file",
+    "hash": "b16192d49189b267c341e2e07bed4694b548f2562c871aeabe81eac56cb6c27f"
   },
   {
-    "path": "/home/spetsnaz/projets/fms/test/toto",
-    "hash": "bb167bb0489ed39a0d29bdb1efda63ec0cc0517f7e6fbade20d692e8430a6cc5"
+    "path": "/home/spetsnaz/projets/fms/test/toto/tata/fichier_de_test.txt",
+    "hash": "a198b65a6dcda3d115d72a55f09191af34cbb176e60158975705ad20b82bbb4d"
   },
   {
-    "path": "/home/spetsnaz/projets/fms/test/ahhahah",
-    "hash": "c9f86e81060bcf11708f7a589c01ee027ef3150ed3381102102ecb84788611ed"
-  },
-  {
-    "path": "/home/spetsnaz/projets/fms/test/qsg",
-    "hash": "24c96045b4a7ee607766ea0019a260b07b271d9849738cc2ec691a664d48bc11"
+    "path": "/home/spetsnaz/projets/fms/test/dossier/tata/fichier_de_test.txt",
+    "hash": "e172641dcb00a2951a0de560415d29d1d7e402aa1d3e23e067499a19033a538c"
   }
 ]

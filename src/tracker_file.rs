@@ -1,13 +1,14 @@
-use std::path::Path;
+use std::path::PathBuf;
 use std::error::Error;
 use std::fs;
 
 use crate::init::{PathJson, ContentJson, sha256_hash};
 
 
+
 fn check_file(
     path_json: &mut PathJson,
-    path: &Path,
+    path: &PathBuf,
     ) -> Result<(), Box<dyn Error>> {
 
     if !path_json.exist.contains(path) {
@@ -28,7 +29,7 @@ fn check_file(
 }
 
 pub fn check_rec(
-    dir: &Path,
+    dir: &PathBuf,
     path_json: &mut PathJson,
 ) -> Result<(), Box<dyn Error>> {
    

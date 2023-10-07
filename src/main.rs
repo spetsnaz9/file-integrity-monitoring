@@ -67,7 +67,10 @@ fn main() -> Result<(), Box<dyn Error>> {
                 None => continue,
             };
 
-            let mut complete_path = path.to_path_buf();
+            let mut complete_path = match watched_dirs.get(&event.wd) {
+                Some(complete_path) => complete_path,
+                None => continue
+            }.clone();
             complete_path.push(name);
 
             if event.mask.contains(EventMask::ISDIR) {
@@ -87,7 +90,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                     }
                     EventMask::MOVED_TO => {
                         println!("Dossier to : {:?}", name);
-                        dir_moved_to(&inotify, path, &name.to_string_lossy().to_string(), &mut watched_dirs)?;
+                        dir_moved_to(&inotify, &complete_path, &mut watched_dirs)?;
                     }
                     _ => {}
                 }
