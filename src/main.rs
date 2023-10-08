@@ -18,10 +18,8 @@ mod watcher;
 use crate::watcher::watch_directory_recursive;
 mod init;
 use crate::init::{init, sha256_hash};
-mod tracker_file;
-use tracker_file::{check_rec, check_file};
 mod event_file;
-use crate::event_file::write_log;
+use crate::event_file::{check_rec, check_file, write_log};
 
 
 
@@ -135,6 +133,15 @@ fn main() -> Result<(), Box<dyn Error>> {
                         check_file(&mut path_json, &complete_path)?;
                         write_log(&path_save, "Created.\n".to_string())?;
                         pop_up(format!("Created file :\n{:?}", strip_path))?;
+                    }
+                    EventMask::MOVED_FROM => {
+                        write_log(&path_save, "Moved_from.\n".to_string())?;
+                        pop_up(format!("Moved_from file :\n{:?}", strip_path))?;
+                    }
+                    EventMask::MOVED_TO => {
+                        check_file(&mut path_json, &complete_path)?;
+                        write_log(&path_save, "Moved_to.\n".to_string())?;
+                        pop_up(format!("Moved_to file :\n{:?}", strip_path))?;
                     }
                     _ => {}
                 }
