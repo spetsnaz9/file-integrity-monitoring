@@ -8,6 +8,7 @@ use std::env;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::error::Error;
+use notify_rust::Notification;
 
 mod my_error;
 use crate::my_error::MyError;
@@ -16,9 +17,11 @@ use crate::event_dir::{dir_moved_from, dir_moved_to, dir_delete, dir_create};
 mod watcher;
 use crate::watcher::watch_directory_recursive;
 mod init;
-use crate::init::init;
+use crate::init::{init, sha256_hash};
 mod tracker_file;
 use tracker_file::{check_rec, check_file};
+mod event_file;
+use crate::event_file::write_log;
 
 
 
@@ -37,6 +40,20 @@ fn check_path(
     }
 
     Err(())
+}
+
+fn pop_up (
+    content: String,
+) -> Result<(), Box<dyn Error>> {
+    
+    println!("{}", content);
+
+    Notification::new()
+        .summary("File Integrity Monitoring")
+        .body(&content)
+        .show()?;
+
+    Ok(())
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -74,6 +91,13 @@ fn main() -> Result<(), Box<dyn Error>> {
             }.clone();
             complete_path.push(name);
 
+            let strip_path = complete_path.strip_prefix(desired_path)?;
+            
+            let hash = sha256_hash(&complete_path);
+            let mut path_save = Path::new("save/").to_path_buf();
+            path_save.push(hash);
+            path_save.push("log");
+
             if event.mask.contains(EventMask::ISDIR) {
                 let flag = EventMask::ISDIR ^ event.mask;
                 match flag {
@@ -100,14 +124,17 @@ fn main() -> Result<(), Box<dyn Error>> {
             } else {
                 match event.mask {
                     EventMask::MODIFY => {
-                        println!("Fichier modifié : {:?}", name);
+                        write_log(&path_save, "Modified.\n".to_string())?;
+                        pop_up(format!("Modified file :\n{:?}", strip_path))?;
                     }
                     EventMask::DELETE => {
-                        println!("Fichier supprimé : {:?}", name);
+                        write_log(&path_save, "Deleted.\n".to_string())?;
+                        pop_up(format!("Deleted file :\n{:?}", strip_path))?;
                     }
                     EventMask::CREATE => {
-                        println!("Fichier créé : {:?}", name);
                         check_file(&mut path_json, &complete_path)?;
+                        write_log(&path_save, "Created.\n".to_string())?;
+                        pop_up(format!("Created file :\n{:?}", strip_path))?;
                     }
                     _ => {}
                 }
