@@ -1,4 +1,4 @@
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use inotify::{Inotify, WatchDescriptor};
 use std::error::Error;
 use std::collections::HashMap;

@@ -18,6 +18,7 @@ use crate::watcher::watch_directory_recursive;
 mod init;
 use crate::init::init;
 mod tracker_file;
+use tracker_file::{check_rec, check_file};
 
 
 
@@ -49,7 +50,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
 
     let path = Path::new(&desired_path);
-    init(&path)?;
+    let mut path_json = init(&path)?;
 
     let mut inotify = Inotify::init().expect("Failed to initialize inotify");
     let mut watched_dirs: HashMap<WatchDescriptor, PathBuf> = HashMap::new();
@@ -79,6 +80,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                     EventMask::CREATE => {
                         println!("Dossier créé : {:?}", name);
                         dir_create(&inotify, &complete_path, &mut watched_dirs)?;
+                        // check_rec(&complete_path, &mut path_json)?;
                     }
                     EventMask::DELETE => {
                         println!("Dossier supprimé : {:?}", name);
@@ -91,6 +93,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                     EventMask::MOVED_TO => {
                         println!("Dossier to : {:?}", name);
                         dir_moved_to(&inotify, &complete_path, &mut watched_dirs)?;
+                        check_rec(&complete_path, &mut path_json)?;
                     }
                     _ => {}
                 }
@@ -104,6 +107,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                     }
                     EventMask::CREATE => {
                         println!("Fichier créé : {:?}", name);
+                        check_file(&mut path_json, &complete_path)?;
                     }
                     _ => {}
                 }

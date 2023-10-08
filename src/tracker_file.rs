@@ -1,12 +1,12 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::error::Error;
-use std::fs;
+use std::fs::{self, File};
 
 use crate::init::{PathJson, ContentJson, sha256_hash};
 
 
 
-fn check_file(
+pub fn check_file(
     path_json: &mut PathJson,
     path: &PathBuf,
     ) -> Result<(), Box<dyn Error>> {
@@ -16,14 +16,28 @@ fn check_file(
 
         let new = ContentJson {
             path: path.to_string_lossy().to_string(),
-            hash,
+            hash: hash.clone(),
         };
 
         path_json.list.push(new);            
         path_json.exist.insert(path.to_path_buf());
 
         path_json.write()?;
+
+        let mut new_dir_save = Path::new("save/").to_path_buf();
+        new_dir_save.push(hash);
+        let new_file_save = new_dir_save.join("log");
+        
+        if !new_dir_save.exists() {
+            fs::create_dir(&new_dir_save)?;
+        }
+
+        File::create(new_file_save)?;
+
+        new_dir_save.push("copy");
+        fs::copy(path, new_dir_save)?;
     }
+    // Sinon check les modifications qu'il y a eu entre temps
 
     Ok(())
 }

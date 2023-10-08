@@ -75,7 +75,7 @@ impl PathJson {
 
 pub fn init(
     dir: &Path
-) -> Result<(), Box<dyn Error>> {
+) -> Result<PathJson, Box<dyn Error>> {
 
     let path = dir.to_path_buf();
     let mut path_json = PathJson::new()?;
@@ -83,7 +83,7 @@ pub fn init(
 
     check_rec(&path, &mut path_json)?;
 
-    Ok(())
+    Ok(path_json)
 }
 
 pub fn sha256_hash(

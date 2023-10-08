@@ -1,14 +1,2 @@
 [
-  {
-    "path": "/home/spetsnaz/projets/fms/test/file",
-    "hash": "b16192d49189b267c341e2e07bed4694b548f2562c871aeabe81eac56cb6c27f"
-  },
-  {
-    "path": "/home/spetsnaz/projets/fms/test/toto/tata/fichier_de_test.txt",
-    "hash": "a198b65a6dcda3d115d72a55f09191af34cbb176e60158975705ad20b82bbb4d"
-  },
-  {
-    "path": "/home/spetsnaz/projets/fms/test/dossier/tata/fichier_de_test.txt",
-    "hash": "e172641dcb00a2951a0de560415d29d1d7e402aa1d3e23e067499a19033a538c"
-  }
 ]
