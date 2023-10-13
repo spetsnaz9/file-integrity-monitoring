@@ -55,10 +55,8 @@ pub fn check_rec(
             let path = entry.path();
 
             if path.is_file() {
-                println!("fichier : {:?}", path);
                 check_file(path_json, &path)?;
             } else if path.is_dir() {
-                println!("dossier : {:?}", path);
                 check_rec(&path, path_json)?;
             }
         }
