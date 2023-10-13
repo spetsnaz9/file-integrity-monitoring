@@ -16,5 +16,6 @@ cargo run <dossier à surveiller>
 Un dossier nommé "save" est inclus pour stocker les logs des fichiers ainsi que les informations sur les modifications qui leur sont associées.
 
 ## Fonctionnalités à venir :
+- Historique des modifications, chaque modification est représentée par un "diff", et une copie du fichier est faite pour la comparer a la nouvelle version de celui-ci.
 - Affichage d'un historique pour chaque modification.
 - Mise en place d'une interface de commande permettant d'afficher les logs d'un fichier spécifique et les modifications associées.
