@@ -20,6 +20,8 @@ mod init;
 use crate::init::{init, sha256_hash};
 mod event_file;
 use crate::event_file::{check_rec, check_file, write_log};
+mod command;
+use command::parser;
 
 
 
@@ -55,7 +57,8 @@ fn pop_up (
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let desired_path = "/home/spetsnaz/projets/fms/test";
+    let desired_path = parser();
+
     match check_path(&desired_path) {
         Err(_) => {
             let error = MyError::new("Bad path!");
@@ -89,7 +92,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             }.clone();
             complete_path.push(name);
 
-            let strip_path = complete_path.strip_prefix(desired_path)?;
+            let strip_path = complete_path.strip_prefix(&desired_path)?;
             
             let hash = sha256_hash(&complete_path);
             let mut path_save = Path::new("save/").to_path_buf();
