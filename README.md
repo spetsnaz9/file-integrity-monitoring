@@ -4,7 +4,7 @@ Ce projet fait en rust vise à garantir l'intégrité des fichiers dans un répe
 
 Pour chaque alerte générée, ce programme affiche une pop-up contenant les détails de l'événement et les enregistre également dans la sortie standard.
 
-À l'initialisation, le projet effectue une analyse récursive du dossier spécifié et crée un log s'il constate qu'un fichier n'a jamais été analysé. Ensuite, chaque événement ultérieur lié à un fichier est enregistré dans ce log.
+Toutes les alertes liées à un fichier sont enregistrées dans des logs.
 
 ## Utilisation :
 Exécutez la commande suivante pour lancer le programme :
