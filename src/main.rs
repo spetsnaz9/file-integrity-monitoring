@@ -9,6 +9,7 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::error::Error;
 use notify_rust::Notification;
+use chrono::Local;
 
 mod my_error;
 use crate::my_error::MyError;
@@ -57,8 +58,10 @@ fn pop_up (
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
+    // Récupère le path à analyser en argument
     let desired_path = parser();
 
+    // Check si ce path est valide
     match check_path(&desired_path) {
         Err(_) => {
             let error = MyError::new("Bad path!");
@@ -67,12 +70,13 @@ fn main() -> Result<(), Box<dyn Error>> {
         _ => (),
     }
 
+    // Créer la structure path_json contenant les infos sur les fichiers analysés
     let path = Path::new(&desired_path);
     let mut path_json = init(&path)?;
 
+    // Créer des watchers récursif pour chaque dossier dans le path
     let mut inotify = Inotify::init().expect("Failed to initialize inotify");
     let mut watched_dirs: HashMap<WatchDescriptor, PathBuf> = HashMap::new();
-
     watch_directory_recursive(&inotify, path, &mut watched_dirs)
         .expect("Failed to watch directories");
 
@@ -81,25 +85,30 @@ fn main() -> Result<(), Box<dyn Error>> {
         let events = inotify.read_events_blocking(&mut buffer).expect("Error while reading events");
 
         for event in events {
+            // Date au format JJ:MM:AAAA HH:MM:SS
+            let current_time = Local::now();
+            let formatted_time = current_time.format("%d:%m:%Y %H:%M:%S").to_string();
+
+            // Récupération du nom du fichier / dossier ayant un event
             let name = match event.name {
                 Some(name) => name,
                 None => continue,
             };
 
+            // Récupère le path complet du fichier / dossier ayant un event
             let mut complete_path = match watched_dirs.get(&event.wd) {
                 Some(complete_path) => complete_path,
                 None => continue
             }.clone();
             complete_path.push(name);
 
-            let strip_path = complete_path.strip_prefix(&desired_path)?;
-            
+            // Récupère le path du fichier de log pour ce fichier
             let hash = sha256_hash(&complete_path);
             let mut path_save = Path::new("save/").to_path_buf();
             path_save.push(hash);
             path_save.push("log");
 
-            if event.mask.contains(EventMask::ISDIR) {
+            if event.mask.contains(EventMask::ISDIR) { // Si l'event est pour un dossier
                 let flag = EventMask::ISDIR ^ event.mask;
                 match flag {
                     EventMask::CREATE => {
@@ -122,29 +131,30 @@ fn main() -> Result<(), Box<dyn Error>> {
                     }
                     _ => {}
                 }
-            } else {
+            } else { // Si l'event est pour un fichier
                 match event.mask {
                     EventMask::MODIFY => {
-                        write_log(&path_save, "Modified.\n".to_string())?;
-                        pop_up(format!("Modified file :\n{:?}", strip_path))?;
+                        check_file(&mut path_json, &complete_path, &formatted_time)?;
+                        write_log(&path_save, format!("{} : Modified file.\n", formatted_time))?;
+                        pop_up(format!("Modified file :\n{:?}", complete_path))?;
                     }
                     EventMask::DELETE => {
-                        write_log(&path_save, "Deleted.\n".to_string())?;
-                        pop_up(format!("Deleted file :\n{:?}", strip_path))?;
+                        write_log(&path_save, format!("{} : Deleted file.\n", formatted_time))?;
+                        pop_up(format!("Deleted file :\n{:?}", complete_path))?;
                     }
                     EventMask::CREATE => {
-                        check_file(&mut path_json, &complete_path)?;
-                        write_log(&path_save, "Created.\n".to_string())?;
-                        pop_up(format!("Created file :\n{:?}", strip_path))?;
+                        check_file(&mut path_json, &complete_path, &formatted_time)?;
+                        write_log(&path_save, format!("{} : Created file.\n", formatted_time))?;
+                        pop_up(format!("Created file :\n{:?}", complete_path))?;
                     }
                     EventMask::MOVED_FROM => {
-                        write_log(&path_save, "Moved_from.\n".to_string())?;
-                        pop_up(format!("Moved_from file :\n{:?}", strip_path))?;
+                        write_log(&path_save, format!("{} : Moved_from file.\n", formatted_time))?;
+                        pop_up(format!("Moved_from file :\n{:?}", complete_path))?;
                     }
                     EventMask::MOVED_TO => {
-                        check_file(&mut path_json, &complete_path)?;
-                        write_log(&path_save, "Moved_to.\n".to_string())?;
-                        pop_up(format!("Moved_to file :\n{:?}", strip_path))?;
+                        check_file(&mut path_json, &complete_path, &formatted_time)?;
+                        write_log(&path_save, format!("{} : Moved_to file.\n", formatted_time))?;
+                        pop_up(format!("Moved_to file :\n{:?}", complete_path))?;
                     }
                     _ => {}
                 }

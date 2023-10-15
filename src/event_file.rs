@@ -3,6 +3,7 @@ use std::io::prelude::*;
 use std::path::{Path, PathBuf};
 use std::error::Error;
 use std::fs::{self, File};
+use chrono::Local;
 
 use crate::init::{PathJson, ContentJson, sha256_hash};
 
@@ -11,23 +12,26 @@ use crate::init::{PathJson, ContentJson, sha256_hash};
 pub fn check_file(
     path_json: &mut PathJson,
     path: &PathBuf,
+    formatted_time: &String,
     ) -> Result<(), Box<dyn Error>> {
 
-    if !path_json.exist.contains(path) {
-        let hash = sha256_hash(path);
+    // Récupère le dossier de save pour ce fichier
+    let hash = sha256_hash(path);
+    let mut new_dir_save = Path::new("save/").to_path_buf();
+    new_dir_save.push(hash.clone());
 
+    let path_string = path.to_string_lossy().to_string();
+
+    if !path_json.exist.contains(path) { // Si le fichier est créé
         let new = ContentJson {
-            path: path.to_string_lossy().to_string(),
+            path: path_string.clone(),
             hash: hash.clone(),
         };
 
         path_json.list.push(new);            
         path_json.exist.insert(path.to_path_buf());
-
         path_json.write()?;
 
-        let mut new_dir_save = Path::new("save/").to_path_buf();
-        new_dir_save.push(hash);
         let new_file_save = new_dir_save.join("log");
         
         if !new_dir_save.exists() {
@@ -38,8 +42,7 @@ pub fn check_file(
 
         new_dir_save.push("copy");
         fs::copy(path, new_dir_save)?;
-    }
-    // Sinon check les modifications qu'il y a eu entre temps
+    } // Si le fichier est modifié
 
     Ok(())
 }
@@ -49,13 +52,17 @@ pub fn check_rec(
     path_json: &mut PathJson,
 ) -> Result<(), Box<dyn Error>> {
    
+    // Date au format JJ:MM:AAAA HH:MM:SS
+    let current_time = Local::now();
+    let formatted_time = current_time.format("%d:%m:%Y %H:%M:%S").to_string();
+
     if dir.is_dir() {
         for entry in fs::read_dir(dir)? {
             let entry = entry?;
             let path = entry.path();
 
             if path.is_file() {
-                check_file(path_json, &path)?;
+                check_file(path_json, &path, &formatted_time)?;
             } else if path.is_dir() {
                 check_rec(&path, path_json)?;
             }
@@ -64,7 +71,6 @@ pub fn check_rec(
 
     Ok(())
 }
-
 
 pub fn write_log(
     path: &PathBuf,
