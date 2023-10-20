@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 use std::error::Error;
 use std::fs::{self, File};
 use chrono::Local;
-use diffy::create_patch;
+use diffy::create_patch_bytes;
 
 use crate::init::{PathJson, ContentJson, sha256_hash};
 
@@ -37,7 +37,14 @@ fn create_file(
     File::create(new_file_save)?;
 
     new_dir_save.push("copy");
-    fs::copy(path, new_dir_save)?;
+    
+    match fs::copy(path, &new_dir_save) {
+        Ok(_) => (),
+        Err(_) => {
+            let mut file = File::create(&new_dir_save)?;
+            file.write_all(b"")?;
+        }
+    };
 
     Ok(())
 }
@@ -50,17 +57,43 @@ fn modify_file(
 
     let new_file_save = new_dir_save.join("copy");
     let new_file_diff = new_dir_save.join(format!("diff_{}.txt", formatted_time));
-    let new_file_copy = new_dir_save.join("copy");
 
-    let old_content = fs::read_to_string(new_file_save)?;
-    let new_content = fs::read_to_string(path)?;
+    let mut file = File::open(&new_file_save)?;
+    let mut buffer_save: Vec<u8> = Vec::new();
+    file.read_to_end(&mut buffer_save)?;
 
-    let patch = create_patch(&old_content, &new_content);
+    let buffer_new = match File::open(&path) {
+        Ok(mut file) => {
+            let mut buffer = Vec::new();
+            if let Err(_) = file.read_to_end(&mut buffer) {
+                let mut file = File::create(&new_file_save)?;
+                file.write_all(b"")?;
+                Vec::new()
+            } else {
+                buffer
+            }
+        }
+        Err(_) => {
+            let mut file = File::create(&new_file_save)?;
+            file.write_all(b"")?;
+            Vec::new()
+        }
+    };
+
+    let patch = create_patch_bytes(&buffer_save, &buffer_new);
 
     let mut file = File::create(&new_file_diff)?;
     file.write_all(&patch.to_bytes())?;
 
-    fs::copy(path, new_file_copy)?;
+    fs::remove_file(&new_file_save)?;
+    match fs::copy(path, &new_file_save) {
+        Ok(_) => (),
+        Err(_) => {
+            let mut file = File::create(&new_file_save)?;
+            file.write_all(b"")?;
+            return Ok(());
+        }
+    };
 
     Ok(())
 }

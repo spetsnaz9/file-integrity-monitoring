@@ -22,7 +22,7 @@ use crate::init::{init, sha256_hash};
 mod event_file;
 use crate::event_file::{check_rec, check_file, write_log};
 mod command;
-use command::parser;
+use crate::command::parser;
 
 
 
@@ -58,6 +58,7 @@ fn pop_up (
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
+    print!("Launch : ");
     // Récupère le path à analyser en argument
     let desired_path = parser();
 
@@ -69,7 +70,6 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
         _ => (),
     }
-
     // Créer la structure path_json contenant les infos sur les fichiers analysés
     let path = Path::new(&desired_path);
     let mut path_json = init(&path)?;
@@ -79,6 +79,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut watched_dirs: HashMap<WatchDescriptor, PathBuf> = HashMap::new();
     watch_directory_recursive(&inotify, path, &mut watched_dirs)
         .expect("Failed to watch directories");
+
+    println!("OK!");
 
     let mut buffer = [0; 4096];
     loop {
