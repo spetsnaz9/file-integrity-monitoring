@@ -114,7 +114,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                     EventMask::CREATE => {
                         println!("Dossier créé : {:?}", name);
                         dir_create(&inotify, &complete_path, &mut watched_dirs)?;
-                        // check_rec(&complete_path, &mut path_json)?;
+                        check_rec(&complete_path, &mut path_json)?;
                     }
                     EventMask::DELETE => {
                         println!("Dossier supprimé : {:?}", name);

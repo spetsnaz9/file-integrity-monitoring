@@ -17,3 +17,5 @@ serde_derive = "1.0"
 notify-rust = "4"
 
 chrono = "0.4"
+
+diffy="0.3.0"
