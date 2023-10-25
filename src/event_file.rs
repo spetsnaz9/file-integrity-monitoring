@@ -66,34 +66,32 @@ fn modify_file(
         Ok(mut file) => {
             let mut buffer = Vec::new();
             if let Err(_) = file.read_to_end(&mut buffer) {
-                let mut file = File::create(&new_file_save)?;
-                file.write_all(b"")?;
                 Vec::new()
             } else {
                 buffer
             }
         }
         Err(_) => {
-            let mut file = File::create(&new_file_save)?;
-            file.write_all(b"")?;
             Vec::new()
         }
     };
 
-    let patch = create_patch_bytes(&buffer_save, &buffer_new);
+    if buffer_save != buffer_new {
+        let patch = create_patch_bytes(&buffer_save, &buffer_new);
 
-    let mut file = File::create(&new_file_diff)?;
-    file.write_all(&patch.to_bytes())?;
+        let mut file = File::create(&new_file_diff)?;
+        file.write_all(&patch.to_bytes())?;
 
-    fs::remove_file(&new_file_save)?;
-    match fs::copy(path, &new_file_save) {
-        Ok(_) => (),
-        Err(_) => {
-            let mut file = File::create(&new_file_save)?;
-            file.write_all(b"")?;
-            return Ok(());
-        }
-    };
+        fs::remove_file(&new_file_save)?;
+        match fs::copy(path, &new_file_save) {
+            Ok(_) => (),
+            Err(_) => {
+                let mut file = File::create(&new_file_save)?;
+                file.write_all(b"")?;
+                return Ok(());
+            }
+        };
+    }
 
     Ok(())
 }
