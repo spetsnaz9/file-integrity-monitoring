@@ -7,6 +7,7 @@ Exécutez la commande suivante pour lancer le programme :
 ``
 cargo run <dossier à surveiller>
 ``
+Attention : Évitez d'utiliser ce projet pour surveiller des dossiers volumineux en raison de la copie complète des fichiers.
 
 ## Fonctionnalités à venir :
 - Mise en place d'une interface de commande permettant d'afficher les logs d'un fichier spécifique et les modifications associées.
