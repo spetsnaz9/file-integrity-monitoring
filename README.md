@@ -1,4 +1,4 @@
-# File Integrity Monitoring :
+# File Integrity Monitoring
 Ce projet en Rust surveille les opérations (modifications, créations, suppressions, déplacements, etc.) dans un répertoire, garantissant l'intégrité des fichiers. Les alertes sont affichées dans des pop-ups et enregistrées dans des logs. Chaque modification est enregistrée avec un "diff" et une copie du fichier est conservée pour comparaison.
 
 ## Utilisation :
