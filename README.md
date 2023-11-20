@@ -12,6 +12,8 @@ Exécutez la commande suivante pour lancer le programme :
 cargo run <dossier à surveiller>
 ``
 
+Vous pouvez consulter le dossier screen, montrant un cas simple.
+
 Attention : Évitez d'utiliser ce projet pour surveiller des dossiers volumineux en raison de la copie complète des fichiers.
 
 ## Fonctionnalités à venir :
