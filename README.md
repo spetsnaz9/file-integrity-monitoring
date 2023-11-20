@@ -7,6 +7,7 @@ Exécutez la commande suivante pour lancer le programme :
 ``
 ./init.sh
 ``
+
 ``
 cargo run <dossier à surveiller>
 ``
