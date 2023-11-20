@@ -5,6 +5,7 @@ Ce projet en Rust surveille les opérations (modifications, créations, suppress
 Exécutez la commande suivante pour lancer le programme :
 
 ``
+./init.sh
 cargo run <dossier à surveiller>
 ``
 
